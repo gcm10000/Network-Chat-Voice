@@ -44,17 +44,27 @@ namespace NetworkChatUDP
                 //Default format CD, 8 bits, mono channel
                 WaveFormat = new WaveFormat(44100, 16, 1)
             };
+
+            Console.WriteLine("Entrada de áudio selecionada: {0}", NAudio.Wave.WaveIn.GetCapabilities(0).ProductName);
             WaveIn.StartRecording();
             //WaveIn.StopRecording();
             WaveIn.DataAvailable += WaveIn_DataAvailable;
-            Console.WriteLine("Entrada de áudio selecionada: {0}", NAudio.Wave.WaveIn.GetCapabilities(0).ProductName);
 
             //Initalize Playing
             waveProvider = new BufferedWaveProvider(new WaveFormat(44100, 16, 1));
             WaveOut waveOut = new WaveOut();
             waveOut.Init(waveProvider);
             waveOut.Play();
-            new Thread(PlaySamples).Start();
+
+            while (true)
+            {
+                byte[] data;
+                c.Receive(out data);
+                byte[] decoded;
+                ALawDecoder.ALawDecode(data, out decoded);
+                waveProvider.AddSamples(decoded, 0, decoded.Length);
+            }
+            //new Thread(PlaySamples).Start();
         }
 
         private static void WaveIn_DataAvailable(object sender, WaveInEventArgs e)
