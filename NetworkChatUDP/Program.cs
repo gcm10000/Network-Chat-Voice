@@ -1,30 +1,29 @@
 ﻿using System;
-using System.Text;
-using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
 
 using NAudio.Wave;
 using g711audio;
+using System.Threading;
 
 namespace NetworkChatUDP
 {
     class Program
     {
-        static Connection c;
+        static BufferedWaveProvider waveProvider;
+        static ConnectionUDP c;
         static void Main(string[] args)
         {
             do
             {
                 Console.Write("Digite o IP para conexão UDP: ");
-                c = new Connection(Console.ReadLine());
+                c = new ConnectionUDP(Console.ReadLine());
             }
             while (c.FormatInvalid);
             Console.WriteLine("Conectado.");
             InitializeAudio();
 
             Continue();
-
         }
 
         static void InitializeAudio()
@@ -35,6 +34,7 @@ namespace NetworkChatUDP
             //}
             //deviceNumber = sourceList.SelectedItems[0].Index;
 
+            //Initialize Recording
             WaveInEvent WaveIn = new WaveInEvent()
             {
                 //Default buffer milliseconds for CODEC G.711 is 20ms. Can be 20ms (DEFAULT) or 30ms.
@@ -48,32 +48,48 @@ namespace NetworkChatUDP
             //WaveIn.StopRecording();
             WaveIn.DataAvailable += WaveIn_DataAvailable;
             Console.WriteLine("Entrada de áudio selecionada: {0}", NAudio.Wave.WaveIn.GetCapabilities(0).ProductName);
+
+            //Initalize Playing
+            waveProvider = new BufferedWaveProvider(new WaveFormat(44100, 16, 1));
+            WaveOut waveOut = new WaveOut();
+            waveOut.Init(waveProvider);
+            waveOut.Play();
+            new Thread(PlaySamples).Start();
         }
 
         private static void WaveIn_DataAvailable(object sender, WaveInEventArgs e)
         {
             byte[] wave = ALawEncoder.ALawEncode(e.Buffer);
             c.Send(wave, wave.Length);
-            //Console.WriteLine(Encoding.UTF8.GetString(e.Buffer));
-            Console.WriteLine("NORMAL: " + e.BytesRecorded);
-            Console.WriteLine("ENCODING: " + wave.Length);
         }
 
-        static void Continue()
+        private static void PlaySamples()
+        {
+            while (true)
+            {
+                byte[] data;
+                c.Receive(out data);
+                byte[] decoded;
+                ALawDecoder.ALawDecode(data, out decoded);
+                waveProvider.AddSamples(decoded, 0, decoded.Length);
+            }
+        }
+
+        private static void Continue()
         {
             Console.WriteLine("Pressione alguma tecla para continuar...");
             Console.ReadKey();
         }
     }
 
-    class Connection
+    class ConnectionUDP
     {
         private const int port = 8000;
         private static IPEndPoint ip;
         public bool FormatInvalid = false;
         UdpClient udpclient;
 
-        public Connection(string IP)
+        public ConnectionUDP(string IP)
         {
             udpclient = new UdpClient(8000, AddressFamily.InterNetwork);
             try
@@ -89,6 +105,10 @@ namespace NetworkChatUDP
         public void Send(byte[] data, int Length)
         {
             udpclient.Send(data, Length, ip);
+        }
+        public void Receive(out byte[] data)
+        {
+            data = udpclient.Receive(ref ip);
         }
     }
 }
