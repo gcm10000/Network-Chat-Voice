@@ -32,11 +32,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="NAudio">
-      <HintPath>..\..\..\..\NAudio.dll</HintPath>
+    <Reference Include="NAudio, Version=1.9.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\NAudio.1.9.0\lib\net35\NAudio.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -47,6 +48,7 @@
   <ItemGroup>
     <Compile Include="ALawDecoder.cs" />
     <Compile Include="ALawEncoder.cs" />
+    <Compile Include="ConnectionUDP.cs" />
     <Compile Include="MuLawDecoder.cs" />
     <Compile Include="MuLawEncoder.cs" />
     <Compile Include="Program.cs" />
@@ -54,6 +56,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
