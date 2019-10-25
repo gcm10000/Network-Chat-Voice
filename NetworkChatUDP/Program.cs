@@ -8,7 +8,7 @@ namespace NetworkChatUDP
     {
         static BufferedWaveProvider waveProvider;
         static ConnectionUDP c;
-        static void Main(string[] args)
+        static void Main()
         {
             do
             {
@@ -47,17 +47,15 @@ namespace NetworkChatUDP
             WaveIn.DataAvailable += WaveIn_DataAvailable;
 
             //Initalize Playing
-            waveProvider = new BufferedWaveProvider(new WaveFormat(44100, 16, 1));
+            waveProvider = new BufferedWaveProvider(new WaveFormat(8000, 8, 1));
             WaveOut waveOut = new WaveOut();
             waveOut.Init(waveProvider);
             waveOut.Play();
 
             while (true)
             {
-                byte[] data;
-                c.Receive(out data);
-                byte[] decoded;
-                ALawDecoder.ALawDecode(data, out decoded);
+                c.Receive(out byte[] data);
+                ALawDecoder.ALawDecode(data, out byte[] decoded);
                 waveProvider.AddSamples(decoded, 0, decoded.Length);
             }
         }
